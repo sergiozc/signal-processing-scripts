@@ -13,7 +13,7 @@ This simulatioin can be found at "/equalizer" directory
 
 # Image Processing
 At "image-processing/" directory you can find two different macros:
-- A implementation of a JPEG compression
+- An implementation of a JPEG compression
 - Image enhancement and 2D filters
 
 # DVB-T
