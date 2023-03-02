@@ -1,7 +1,8 @@
 
 """
-ANTONIO SIMÓN MARTÍN
-SERGIO ZAPATA CAPARRÓS
+Realce de imágenes y filtros 2D.
+
+Autores: Sergio Zapata Caparrós y Antonio Simón Martín
 
 """
 
