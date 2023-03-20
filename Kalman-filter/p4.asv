@@ -46,7 +46,7 @@ med = 1; %Contador que nos va a indicar qué medida tenemos que tomar
 k = 1;   %Contador que nos va a indicar en qué instante nos encontramos (en formato entero)
 error = zeros(1,length(variables.tt)); %Almacenaremos el error en las 240 iteraciones
 pos = zeros(2,length(variables.tt));   %Almacenaremos la posición estimada en las 240 iteraciones
-r_est = zeros(1,length(variables.tt)); %Almacenaremos el radio estimado de órbita
+r_est = zeros(2,length(variables.tt)); %Almacenaremos el radio estimado de órbita
 r_est_medidas = zeros(1,240); %Aquí almacenaremos las medidas tomadas cada 3 horas (para comparar luego)
 r_orig = zeros(1, 240); %Aquí vamos a almacenar el radio verdadero
 
@@ -63,23 +63,21 @@ r = sqrt(xp(1)^2 + xp(2)^2); % Radio
 
 %CORRIGE LA MATRIZ DE TRANSICIÓN DE LA FUNCIÓN DIFEQ
 %Debemos conformar la matriz de transición F
-% elemento31 = GM * (3*xp(1)^2 - r^2) / r^5;
-% elemento32 = GM * (3*xp(1) * xp(2)) / r^5;
-% elemento41 = GM * (3*xp(1) * xp(2)) / r^5;
-% elemento42 = GM * (3*xp(2)^2 - r^2) / r^5;
-% F = [0 0 1 0; 0 0 0 1; elemento31 elemento32 0 0; elemento41 elemento42 0 0];
+elemento31 = GM * (3*xp(1)^2 - r^2) / r^5;
+elemento32 = GM * (3*xp(1) * xp(2)) / r^5;
+elemento41 = GM * (3*xp(1) * xp(2)) / r^5;
+elemento42 = GM * (3*xp(1)^2 - r^2) / r^5;
+F = [0 0 1 0; 0 0 0 1; elemento31 elemento32 0 0; elemento41 elemento42 0 0];
 
 %OJO ESTO NO SE SI VA AQUI (creo que si): Obtenemos la estima del error
-%P = F * P * F' + Q;
-%P = F * P + P * F' + Q;
-
+P = F * P * F' + Q;
 
 %COMPROBAR SI ESTO ES ASÍ
 tini = kt;
 tfin = tini + Tpred;
 
 %Resolvemos con ode45 las ecuaciones diferenciales
-[~, xp] = ode45(@difeq, [tini, tfin], xp);
+[tp, xp] = ode45(@difeq, [tini, tfin], xp);
 
 
 xp = xp(end, :); % Tomamos las 4 variables de estado
@@ -88,7 +86,7 @@ xp = xp(end, :); % Tomamos las 4 variables de estado
 % INCORPORACIÓN DE MEDIDAS
 
 %COMPROBAR TODO ESTO, NO SE SI ESTÁ BIEN
-if mod(kt,Tmed) == 0 && kt ~= 0 %Sólo incorporamos una medida cada 3 horas
+if mod(kt,Tmed) == 0  %Sólo incorporamos una medida cada 3 horas
 
     z = variables.zmed(med); %Tomamos la medida (observaciones)
 
@@ -96,7 +94,8 @@ if mod(kt,Tmed) == 0 && kt ~= 0 %Sólo incorporamos una medida cada 3 horas
     
     H = [xp(1)/r xp(2)/r 0 0]; %Creamos el vector de transformación de medidas
     
-    %Ganancia de Kalman
+    % DA FALLO AL MULTIPLICAR (P*H') * inv(X) porque es vector 1x4 y matriz
+    % 4x4
     K_gain = P * H' * inv(H * P * H' + R) ; %Obtenemos la ganancia de Kalman
 
     xp(1:4) = transpose(xp(1:4)) + K_gain*(z - H*transpose(xp(1:4))); %Corregimos nuestra estimación con las medidas obtenidas
@@ -125,7 +124,7 @@ error_estimado(k) = sqrt(sigmax^2 + sigmay^2);
 
 orbita(:,k) = xp(1:2); %Guardamos el valor estimado de la órbita
 
-r_orig(k) = sqrt(variables.Cxy_true(k, 1)^2 + variables.Cxy_true(k,2)^2); 
+r_orig = sqrt(variables.Cxy_true(k, 1)^2 + variables.Cxy_true(k,2)^2); 
 %Almacenamos el valor verdadero de la órbita para comparación
 
 
@@ -138,14 +137,12 @@ end
 
 r_est_medidas(r_est_medidas == 0) = NaN;
 figure(1);
-plot(r_est_medidas,'*');
+stem(r_est_medidas);
 hold on;
 plot(r_est);
 hold on;
-plot(r_orig)
+plot(
 title('Radio medido');
-%ylim([min(r_orig),max(r_orig)])
-legend('medidas de radio','radio estimado','radio verdadero')
 
 % HAY QUE TRAZAR LA ÓRBITA ESTIMADA DEL SATÉLITE (con el radio)
 figure(2);
