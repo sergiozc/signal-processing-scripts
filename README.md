@@ -9,7 +9,7 @@ This macro can be found at "voice-processing/" directory.
 # Equalizer
 The equalization of a QAM-16 signal transmitted through a multipath channel can be found at "equalizer/" directory.
 The simulation has been carried out for a static channel (TSE-LS) and for a changing channel (TSE decision-directed).
-This simulatioin can be found at "/equalizer" directory
+This simulation can be found at "/equalizer" directory
 
 # Image Processing
 At "image-processing/" directory you can find two different macros:
