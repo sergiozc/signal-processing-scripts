@@ -12,8 +12,6 @@ close all;
 
 dist = 35786;   % Distancia en km a la superficie terrestre
 v = 11068;      % Velocidad orbital (km/h)
-G = 6.6742e-11; % Cte gravitacional (m3/kg*s2)
-M = 5.9736e24;  % Masa de la Tierra (kg)
 
 x = [42164 0 0 11068];         % Vector de estado [x y x(.) y(.)]
                                % siendo y(.) la velocidad ('y' posición)
@@ -144,7 +142,6 @@ plot(r_est);
 hold on;
 plot(r_orig)
 title('Radio medido');
-%ylim([min(r_orig),max(r_orig)])
 legend('medidas de radio','radio estimado','radio verdadero')
 
 % HAY QUE TRAZAR LA ÓRBITA ESTIMADA DEL SATÉLITE (con el radio)
