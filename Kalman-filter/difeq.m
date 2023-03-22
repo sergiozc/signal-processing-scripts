@@ -22,7 +22,7 @@ elemento42 = GM * (3*x(2)^2 - r^2) / r^5;
 F = [0 0 1 0; 0 0 0 1; elemento31 elemento32 0 0; elemento41 elemento42 0 0];
 
 % Derivada de la matriz P
-dP = F * P + P * F' + Q; % Habiendo definido Q como global
+dP = (F * P) + (P * F.') + Q; % Habiendo definido Q como global
 
 dp_array = reshape(dP, [1, 16]);
 

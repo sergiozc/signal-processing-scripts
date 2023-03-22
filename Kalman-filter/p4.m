@@ -27,7 +27,7 @@ variables = load('Variables_Orbita.mat');
 sig2w = variables.sig2w;    % Varianza de la Perturbación de la aceleración
 GM = variables.GM;
 
-w = [0; 0; sig2w; sig2w];   % Vector de las perturbaciones
+w = [0 0 sig2w sig2w];   % Vector de las perturbaciones
 Q = diag(w);                % Matriz Covarianza(de las perturbaciones)
 
 P = diag([var_pos var_pos var_v var_v]); % Matriz de errores (diagonal, inicial)
@@ -57,7 +57,7 @@ for kt = 0:Tpred:24-Tpred
 %el resto de iteraciones, tenemos el vector xp de salida de la iteración
 %anterior
 
-r = sqrt(xp(1)^2 + xp(2)^2); % Radio
+%r = sqrt(xp(1)^2 + xp(2)^2); % Radio
 
 %CORRIGE LA MATRIZ DE TRANSICIÓN DE LA FUNCIÓN DIFEQ
 %Debemos conformar la matriz de transición F
@@ -94,13 +94,22 @@ if mod(kt,Tmed) == 0 && kt ~= 0 %Sólo incorporamos una medida cada 3 horas
     
     H = [xp(1)/r xp(2)/r 0 0]; %Creamos el vector de transformación de medidas
     
-    %Ganancia de Kalman
-    K_gain = P * H' * inv(H * P * H' + R) ; %Obtenemos la ganancia de Kalman
+    P = reshape(xp(5:20),[4, 4]);
 
-    xp(1:4) = transpose(xp(1:4)) + K_gain*(z - H*transpose(xp(1:4))); %Corregimos nuestra estimación con las medidas obtenidas
+    %Ganancia de Kalman
+    K_gain = P * H.' * inv(H * P * H.' + R) ; %Obtenemos la ganancia de Kalman
+
+    %xp(1:4) = transpose(xp(1:4)) + K_gain*(z - H*transpose(xp(1:4))); %Corregimos nuestra estimación con las medidas obtenidas
+    xp(1:4) = transpose(xp(1:4)) + K_gain*(z - r);
+
+    P = P - (K_gain * H * P); %Corregimos nuestra estimación del error con las medidas obtenidas
     
-    P = P - K_gain * H * P; %Corregimos nuestra estimación del error con las medidas obtenidas
-    
+
+    dp_array = reshape(P, [1, 16]);
+
+    % dxp tiene que ser un vector columna(formato de la función ode45)
+    xp = [xp(1) xp(2) xp(3) xp(4) dp_array];
+
     r_est_medidas(k) = z; 
     
     med = med + 1; %Incrementamos el iterador
@@ -108,6 +117,9 @@ if mod(kt,Tmed) == 0 && kt ~= 0 %Sólo incorporamos una medida cada 3 horas
 end
 
 % EVALUACIÓN DE RESULTADOS
+
+%ESTO AQUI HAY QUE GUARDARSE MAS COSAS OSEA LAS 20 PQ TE HACE FALTA PARA EL
+%ERROR. GUARDATE MAS COSAS DE XP Y MIRA EL GUIÓN.
 
 %Almacenamos la distancia estimada para cada iteración
 r_est(k) = sqrt(xp(1)^2 + xp(2)^2);
