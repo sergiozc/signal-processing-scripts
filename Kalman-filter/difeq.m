@@ -1,5 +1,6 @@
 function [dxp] = difeq(t, xp)
-% Función que construye las ecuaciones diferenciales
+% Función que resuelve las ecuaciones diferenciales de la parte de
+% predicción en el filtro de Kalman
 
 global GM;
 global Q; 
@@ -14,7 +15,8 @@ dx(4) = (-GM / r^3) * x(2);
 P = reshape(xp(5:20),[4,4]); % Hay que reorganizarlas en la matriz P con un reshape
 % (Comprobar que la matriz P sea diagonal)
 
-% Construimos la matriz de transición F
+% Construimos la matriz de transición F la cual transforma el vector de
+% variables de estado anterior al vector de variables de estado actual
 elemento31 = GM * (3*x(1)^2 - r^2) / r^5;
 elemento32 = GM * (3*x(1) * x(2)) / r^5;
 elemento41 = GM * (3*x(1) * x(2)) / r^5;
@@ -23,7 +25,7 @@ F = [0 0 1 0; 0 0 0 1; elemento31 elemento32 0 0; elemento41 elemento42 0 0];
 
 % Derivada de la matriz P
 dP = (F * P) + (P * F.') + Q; % Habiendo definido Q como global
-
+% Redimensionamos a vector para poder concatenar
 dp_array = reshape(dP, [1, 16]);
 
 % dxp tiene que ser un vector columna(formato de la función ode45)
