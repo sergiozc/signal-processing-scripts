@@ -120,8 +120,8 @@ error_2d = variables.Cxy_true(k,:) - xp(1:2);
 error_cometido(k) = sqrt( error_2d(1)^2 + error_2d(2)^2 ); %Expresamos el error en formato cuadrático
 
 % Error cometido estimado
-sigmax = P(1,1); % Elemento 1 de la diagonal 
-sigmay = P(2,2); % Elemento 2 de la diagonal
+sigmax = xp(5); % Elemento 1 de la diagonal 
+sigmay = xp(10); % Elemento 2 de la diagonal
 error_estimado(k) = sqrt(sigmax^2 + sigmay^2);
 
 orbita(:,k) = xp(1:2); %Guardamos el valor estimado de la órbita
@@ -133,10 +133,17 @@ r_orig(k) = sqrt(variables.Cxy_true(k, 1)^2 + variables.Cxy_true(k,2)^2);
 k = k + 1;
 end
 
-%Comparar la desviación estándar del ruido de medida con la desviación
-%estándar del error entre rk y rk_est
-% Radio original
+%% Comparación de desviaciones típicas
+%Desviación estándar del error entre rk y rk_est
+desv_estandar = sqrt((mean(r_orig - r_est).^2) / length(r_orig));
+% Desviación estándar del ruido de medida
+desv_estandar_v = sqrt(variables.sig2v);
+% Se obtiene mayor desviación estándar para el ruido de medida ya que,
+% realmente, el ruido de medida sólo está afectando a la estimación del
+% radio cuando se toma una medida, es decir, cada 3 h, para las demás
+% iteraciones del filtro se realizan estimaciones
 
+%% Comparación con las medidas del radio
 r_est_medidas(r_est_medidas == 0) = NaN;
 figure(1);
 plot(r_est_medidas,'*');
@@ -144,10 +151,11 @@ hold on;
 plot(r_est);
 hold on;
 plot(r_orig)
+grid on
 title('Radio medido');
 legend('medidas de radio','radio estimado','radio verdadero')
 
-% Comparación de las órbitas
+%% Comparación de las órbitas
 figure(2);
 plot(orbita(1,:),orbita(2,:))
 hold on
@@ -155,11 +163,12 @@ plot(variables.Cxy_true(:, 1), variables.Cxy_true(:, 2))
 title('Comparación de órbitas')
 legend('Órbita estimada', 'Órbita real');
 
-% Comparación del error cometido y el error estimado
+%% Comparación del error cometido y el error estimado
 figure(3);
 plot(error_cometido);
 hold on
 plot(error_estimado);
+grid on
 ylabel('Error');
 xlabel('Instante de medida');
 legend('Error cometido', 'Error estimado');
