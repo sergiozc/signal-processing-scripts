@@ -1,0 +1,14 @@
+function [] = pesos(tn,Xn)
+%PESOS: Función que calcula los pesos del beamformer para cada f
+
+N = length(tn);
+
+Xn_pesos = zeros(length(Xn),length(tn));
+
+    for f = 1:length(Xn)
+
+        Wc = (1/N)*exp();
+
+
+    end
+end
