@@ -108,8 +108,6 @@ end
 
 % EVALUACIÓN DE RESULTADOS
 
-%ESTO AQUI HAY QUE GUARDARSE MAS COSAS OSEA LAS 20 PQ TE HACE FALTA PARA EL
-%ERROR. GUARDATE MAS COSAS DE XP Y MIRA EL GUIÓN.
 
 %Almacenamos la distancia estimada para cada iteración
 r_est(k) = sqrt(xp(1)^2 + xp(2)^2);
