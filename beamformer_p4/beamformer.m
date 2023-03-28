@@ -23,7 +23,7 @@ L_signal = length(xc(:,1)); %Longitud total de la señal
 Ntramas = L_signal/128;     %Determinamos el número de tramas
 iter = 1;        %Iterador del bucle para las ventanas
 win = hann(Ltrama+1);         %Establecemos la ventana de Hanning
-n = [0:1:6];         
+n = (0:1:6);         
 tn = ((d*cos(phi).*n)/Vprop);%Creamos el vector de retardos
 
 pesoss = pesos(tn);

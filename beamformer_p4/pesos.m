@@ -8,7 +8,7 @@ W = zeros(flim,N); %Inicializamos el vector de pesos
     for f = 1:flim       
         for i = 1:N
 
-            W(f,i) = (1/N)*exp(j*2*pi*tn(i)*f); %Vector 1x7
+            W(f,i) = (1/N)*exp(1j*2*pi*tn(i)*5000); % Matriz 129x7
 
         end
     end
