@@ -1,4 +1,4 @@
-function [Dteo] = calcula_Dteo(w, f, d, Vprop, barrido)
+function [Dteo] = calcula_Dteo(w, f, index_freq, d, Vprop, barrido)
     
     N = 7;
     D = zeros(1,length(barrido));
@@ -6,7 +6,7 @@ function [Dteo] = calcula_Dteo(w, f, d, Vprop, barrido)
     for i=1:length(barrido)
         Dsum = 0;
         for n=1:N
-            Dsum = Dsum + exp(2 * pi * 1j * f * n * d * cos(barrido(i)) / Vprop) * conj(w(f, n));
+            Dsum = Dsum + exp(2 * pi * 1j * f(index_freq) * n * d * cos(barrido(i)) / Vprop) * conj(w(index_freq, n));
     
         D(i) = Dsum;
         end

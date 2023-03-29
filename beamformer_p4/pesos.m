@@ -1,14 +1,14 @@
-function [W] = pesos(tn)
+function [W] = pesos(tn, freq)
 %PESOS: Función que calcula los pesos del beamformer para cada f
 
 N = length(tn); %longitud del vector de retardos
-flim = 129;     %Barrido de frecuencias
+flim = length(freq);     %Barrido de frecuencias
 W = zeros(flim,N); %Inicializamos el vector de pesos
+freq = linspace(1, 8000, 129);
 
     for f = 1:flim       
         for i = 1:N
-
-            W(f,i) = (1/N)*exp(1j*2*pi*tn(i)*5000); % Matriz 129x7
+            W(f,i) = (1/N)*exp(1j*2*pi*tn(i)*freq(f)); % Matriz 129x7
 
         end
     end

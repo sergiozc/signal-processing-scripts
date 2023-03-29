@@ -41,9 +41,8 @@ D_8kHz = calcula_Dteo(w, freq, index_freq2, d, Vprop, theta);
 figure(1);
 polarplot(theta_polar, D_1kHz);
 hold on
-polarplot(theta_polar, D_8kHz);
-title('Directividad teórica');
-legend('f = 1kHz', 'f = 8kHz');
+polarpolt(theta_polar, D_8kHz);
+title('Directividad f = 6kHz');
 
 %% Directividad en función de la frecuencia
 theta_surf = linspace(0, 2*pi, 129); % Barrido en theta
