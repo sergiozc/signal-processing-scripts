@@ -23,7 +23,7 @@ w = pesos(tn, freq);
 
 % Visualización de los retardos impuestos
 % (La señal llega antes al último sensor).
-figure(3)
+figure(1)
 stem(tn)
 title('Retardos')
 ylabel('tiempo (s)')
@@ -38,7 +38,7 @@ index_freq2 = 129;
 D_8kHz = calcula_Dteo(w, freq, index_freq2, d, Vprop, theta);
 
 
-figure(1);
+figure(2);
 polarplot(theta_polar, D_1kHz);
 hold on
 polarplot(theta_polar, D_8kHz);
@@ -48,13 +48,13 @@ legend('f = 1kHz', 'f = 8kHz');
 %% Directividad en función de la frecuencia
 theta_surf = linspace(0, 2*pi, 129); % Barrido en theta
 Df = calcula_Df(w, freq, d, Vprop, theta_surf);
-figure(2);
+figure(3);
 surf(freq, rad2deg(theta_surf), Df);
 xlabel('f(Hz)');
 ylabel('phi');
 zlabel('D(f, phi)');
 
-figure(3);
+figure(4);
 pcolor(freq, rad2deg(theta_surf), abs(Df.'));
 shading interp;
 colorbar;

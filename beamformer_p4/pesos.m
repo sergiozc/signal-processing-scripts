@@ -4,10 +4,10 @@ function [W] = pesos(tn, freq)
 N = length(tn); %longitud del vector de retardos
 flim = length(freq);     %Barrido de frecuencias
 W = zeros(flim,N); %Inicializamos el vector de pesos
-freq = linspace(1, 8000, 129);
 
     for f = 1:flim       
         for i = 1:N
+            
             W(f,i) = (1/N)*exp(1j*2*pi*tn(i)*freq(f)); % Matriz 129x7
 
         end
