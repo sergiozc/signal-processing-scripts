@@ -26,7 +26,7 @@ win = hann(Ltrama+1);         %Establecemos la ventana de Hanning
 n = [0:1:6];         
 tn = ((d*cos(phi).*n)/Vprop);%Creamos el vector de retardos
 
-pesoss = pesos(tn);
+w = pesos(tn);
 
 
 %Para realizar el trabajo, usaremos un doble bucle
@@ -39,13 +39,11 @@ for ntram = 1:Ntramas
         
         xn = xc(iter:iter + Ltrama ,c); %Tomamos la porción de señal del canal correspondiente
         Xn = fft(sqrt(win).*xn); %Realizamos la transformada de Fourier de la ventana
-        Xn = Xn(1:129);          %Tomamos las componentes de frecuencia de 0 a Fs/2 (Fs/2 = 8 kHz)
+        Xn = Xn(1:129);          %Tomamos las componentes de frecuencia de 0 a Fs/2 (Fs/2 = 8 kHz)s     
         
+        Xn = Xn * w(:,c); %Multiplicamos 
 
-
-
-
-        %Practicamos la FFT
+        
         
         
 
