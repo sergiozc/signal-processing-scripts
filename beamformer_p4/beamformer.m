@@ -49,7 +49,7 @@ for ntram = 1:Ntramas
         %si esta bien
 
         %Realizamos la simetrización para practicar la transformada inversa
-        XOUT = cat(1, Xn, Xn(end-1:-1:1)); %NO SE SI ESTÁ BIEN LA DIMENSIÓN
+        XOUT = cat(1, Xn, Xn(end:-1:2)); %NO SE SI ESTÁ BIEN LA DIMENSIÓN
 
         %Hacemos la transformada de Fourier inversa
         xout = ifft(sqrt(win).*XOUT);
