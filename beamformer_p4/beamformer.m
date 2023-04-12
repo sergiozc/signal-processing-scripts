@@ -29,7 +29,7 @@ freq = linspace(1, 8000, 129); %Vector de frecuencias
 
 
 %Creamos la matriz vacía donde vamos a guardar el resultado final
-xc_out = zeros(L_signal,7);
+xc_out = zeros(L_signal,N);
 
 %obtenemos los pesos por medio de nuestra función auxiliar
 w = pesos(tn, freq);
@@ -56,11 +56,32 @@ for ntram = 1:Ntramas
         xout = real(xout);
         
         %Sacamos el resultado final
-        xc_out(iter:iter + Ltrama ,c) = xc_out(iter:iter + Ltrama ,c) + xout;
+        xc_out(iter:iter + Ltrama, c) = xc_out(iter:iter + Ltrama, c) + xout;
 
     end
     
     iter = iter + 127; %Actualizamos el iterador
 
 end
+
+%% comprobaciones
+
+figure
+plot(xc_out(:,3))
+
+xc_out_all = zeros(L_signal,1);
+
+%Sumando todos
+
+for i =1:7
+
+    xc_out_all = xc_out_all + xc_out(:,i);
+
+end
+
+figure
+plot(xc_out_all)
+title('suma de todos ')
+
+
 
