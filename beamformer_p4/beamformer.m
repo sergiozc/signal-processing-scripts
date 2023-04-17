@@ -20,12 +20,12 @@ Ltrama = 256;       %Tramas de 256 muestras
 N = 7;              %Contamos con 7 elementos
 phi = pi/4;         %Ángulo de llegada del target
 L_signal = length(xc(:,1));   %Longitud total de la señal
-Ntramas = L_signal/128;       %Determinamos el número de tramas
+Ntramas = floor(L_signal/128);       %Determinamos el número de tramas
 iter = 1;                     %Iterador del bucle para las ventanas
-win = hann(Ltrama+1);         %Establecemos la ventana de Hanning
+win = hanning(Ltrama+1,'periodic');
 n = (0:1:6);         
 tn = ((d*cos(phi).*n)/Vprop);  %Creamos el vector de retardos
-freq = linspace(1, 8000, 129); %Vector de frecuencias
+freq = linspace(1, 8000, 129); %Vector de frecuencias (Fs >= Fmax)
 
 
 %Creamos la matriz vacía donde vamos a guardar el resultado final
@@ -42,22 +42,16 @@ for ntram = 1:Ntramas
         
         xn = xc(iter:iter + Ltrama ,c); %Tomamos la porción de señal del canal correspondiente
         Xn = fft(sqrt(win).*xn);        %Realizamos la transformada de Fourier de la ventana
-        Xn = Xn(1:129);                 %Tomamos las componentes de frecuencia de 0 a Fs/2 (Fs/2 = 8 kHz)s     
-        Xn = Xn .* w(:,c);              %Multiplicamos por los pesos correspondientes
+        Xn = Xn(1:Ltrama/2+1);          %Tomamos las componentes de frecuencia de 0 a Fs/2 (Fs/2 = 8 kHz)s     
+        Xn = Xn .* conj(w(:,c));        %Multiplicamos por los pesos correspondientes
         
 
         
-        
-        
-        % ESTO CREO QUE VA FUERA DEL FOR (DESPUÉS DEL SUM)
         %Realizamos la simetrización para practicar la transformada inversa
-        XOUT = cat(1, Xn, Xn(end:-1:2)); %NO SE SI ESTÁ BIEN LA DIMENSIÓN
-
-        %Hacemos la transformada de Fourier inversa
-        xout = ifft(sqrt(win).*XOUT);
-        xout = real(xout);
+        XOUT = cat(1, Xn, conj(Xn(end:-1:2)));
+        xout = real(ifft(sqrt(win).*XOUT));
         
-        %Sacamos el resultado final (concatenación de las tramas)
+        %Concatenación de tramas mediante ''overlap add''
         xc_out(iter:iter + Ltrama, c) = xc_out(iter:iter + Ltrama, c) + xout;
 
     end
@@ -67,25 +61,27 @@ for ntram = 1:Ntramas
 
 end
 
+xc_out_sum = sum(xc_out, 2);
+soundsc(real(xc_out_sum),Fs);
 
-%% comprobaciones
 
-figure
-plot(xc_out(:,3))
+figure(5)
+plot(real(xc_out_sum));
 
-xc_out_all = zeros(L_signal,1);
 
-%Sumando todos (SUM)
+%% Cálculo SNR
 
-for i =1:7
+% SNR DESPUÉS DEL BEAMFORMING DAS
+ruido_orig = var((xc(1:3000, 1))); %Interferencia aislada en las 3000 primeras muestras
+pot_orig = var((xc(3001:end, 1)));
+SNR_orig = calculo_SNR(pot_orig, ruido_orig);
+fprintf('SNR(antes)  = %f dB\n', SNR_orig);
 
-    xc_out_all = xc_out_all + xc_out(:,i);
-
-end
-
-figure
-plot(xc_out_all)
-title('suma de todos ')
+% SNR DESPUÉS DEL BEAMFORMING DAS
+ruido_DAS = var(real(xc_out_sum(1:3000)));
+pot_DAS = var(real(xc_out_sum(3001:end)));
+SNR_DAS = calculo_SNR(pot_DAS, ruido_DAS);
+fprintf('SNR(después)  = %f dB\n', SNR_DAS);
 
 
 %% Comprobación beamformer
