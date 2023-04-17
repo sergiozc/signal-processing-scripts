@@ -1,5 +1,7 @@
 function [Dteo] = calcula_Dteo(w, f, index_freq, d, Vprop, barrido)
-    
+%Esta función implementa el cálculo teórico de la Directividad para su
+%representación.
+
     N = 7;
     D = zeros(1,length(barrido));
 
