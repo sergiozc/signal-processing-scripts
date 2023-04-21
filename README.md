@@ -20,3 +20,7 @@ At "image-processing/" directory you can find two different macros:
 This macro implements the decoding of a DVB-T channel, visualizing TPS carriers.
 PD: The signal is not provided but it can be recorded by a RTL-SDR
 The code can be found at "DVB-T/" directory.
+
+# Beamforming
+An acoustic delay and sum beamformer has been implemented in order to enhance an audio signal.
+Directivity patterns are also shown.
