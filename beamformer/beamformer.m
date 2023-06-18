@@ -13,7 +13,7 @@ xc = signals.xc;
 xc = cell2mat(xc); % 7 columnas
 
 figure(1)
-plot(xc)
+plot(xc(:,3))
 title('Representación temporal del audio')
 
 
@@ -22,6 +22,7 @@ Fs = 16e3;          %Frecuencia de muestreo
 d = 0.04;           %Distancia entre sensores
 Vprop = 340;        %Velocidad del sonido
 Ltrama = 256;       %Tramas de 256 muestras
+Lfft = 512;
 N = 7;              %Contamos con 7 elementos
 phi = pi/4;         %Ángulo de llegada del target
 L_signal = length(xc(:,1));   %Longitud total de la señal
@@ -39,13 +40,14 @@ xc_out = zeros(L_signal,N);
 w = pesos(tn, freq);
 XOUT = zeros(129, 1);
 
+
 %Para realizar el trabajo, usaremos un doble bucle
 for ntram = 1:Ntramas 
 
-    for c = 1:7        
+    for c = 1:N        
         
         xn = xc(iter:iter + Ltrama ,c); %Tomamos la porción de señal del canal correspondiente
-        Xn = fft(sqrt(win).*xn);        %Realizamos la transformada de Fourier de la ventana
+        Xn = fft(win.*xn);        %Realizamos la transformada de Fourier de la ventana
         Xn = Xn(1:Ltrama/2+1);          %Tomamos las componentes de frecuencia de 0 a Fs/2 (Fs/2 = 8 kHz)s     
         Xn = Xn .* conj(w(:,c));        %Multiplicamos por los pesos correspondientes
         
@@ -69,10 +71,21 @@ end
 xc_out_sum = sum(xc_out, 2);
 soundsc(real(xc_out_sum),Fs);
 
+xout_norm = xc_out_sum/max(abs(xc_out_sum));
+x_antes_norm = xc(:,3)/max(abs(xc(:,3)));
+
+% Guardamos señal resultante normalizada
+fout=strcat('Resultado','.wav');
+audiowrite(fout,xout_norm,Fs)
+
 
 figure(2)
-plot(real(xc_out_sum));
-title('Representación temporal del audio tras D&S')
+plot(x_antes_norm);
+hold on
+plot(real(xout_norm));
+hold off
+legend('Señal sensor central','Señal a la salida del beamformer')
+title('Representación temporal tras D&S')
 %Se puede comprobar como el ruido se ha minimizado
 
 %% Cálculo SNR
