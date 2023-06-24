@@ -1,37 +1,89 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%% PRÁCTICA 5: BEAMFORMER DELAY AND SUM %%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Autores: Javier Lobato Martín y Sergio Zapata Caparrós
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clc
-clear all
-close all
+clc;
+clear all;
+close all;
 
-%Cargamos las señales
-signals = load('signals_array.mat');
-xc = signals.xc;
-xc = cell2mat(xc); % 7 columnas
+
+%% Lectura de las señales
+
+% DATOS
+% Array lineal de espaciado variable 4cm (4A)
+% Posicion Speaker: 1 m del centro del array
+% Muestras: 16 kHz, 16 bits por muestra
+% 15 canales
+% Big-endian
+Fs     = 16000; % Frec. muestreo
+Narray = 15; % Nº de canales del array
+dist=[0 16 24 32 36 40 44 48 52 56 60 64 72 80 96]*0.01; % Espaciado (m)
+c=340; % Velocidad propagacion
+fm = 16e3;
+
+% Seleccionar señales
+dir = 'signals/';
+fname = 'an101-mtms-arr4A.adc'; dspk=1; % computer lab, speaker 1m
+
+% Lectura de las señales
+fnamebase=fname(1:16);
+fname = strcat(dir,fname)
+[fid,msg] = fopen(fname,'r','b');
+if fid < 0
+  disp(msg);
+  exit;
+else
+  data = fread(fid,'int16');
+  fclose(fid);
+end
+
+% Separa señales
+nsamp=[]; x={};
+for i = 1:Narray
+    x{i} = data(i:Narray:end);
+    x{i} = x{i} - mean(x{i});
+    nsamp(i)=length(x{i});
+end
+
+% Seleccionamos subarray
+%index=[5, 6, 7, 8, 9, 10, 11]; %array de 4 cm
+index=[3, 4, 6, 8, 10, 12, 13]; %array de 8 cm
+%index=[1, 2, 4, 8, 12, 14, 15]; %array de 16 cm
+%index=[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15]; %array completo
+Nc=length(index); % No. de canales a utilizar
+dist=dist-dist(index(1)); %Primer elemento subarray como referencia
+dist=dist(index);  %fijar espaciado subarray
+
+% Agrupamos señales subarray en matriz
+Nsamp=min(nsamp); % No. de muestras
+y=[];
+for n=1:Nc
+    y=[y x{index(n)}(1:Nsamp)];
+end
+maxmax=max(max(abs(y)));
+y=y/maxmax; %normalización del rango de la señal
+
+% Reproduce y guarda central como señal de referencia ruidosa
+ncent=floor(Nc/2)+1;
+xcent=y(:,ncent);
+%sound(xcent,fm)
+fcent=strcat(fnamebase,'.wav');
+audiowrite(fcent,xcent/max(abs(xcent)),Fs)
+
 
 figure(1)
-plot(xc(:,3))
+plot(y(:,ncent))
 title('Representación temporal del audio')
 
-
+%% Variables
 %Determinamos variables
 Fs = 16e3;          %Frecuencia de muestreo
-d = 0.04;           %Distancia entre sensores
+d=dist(2)-dist(1);  % Separación entre elementos del array
 Vprop = 340;        %Velocidad del sonido
 Ltrama = 256;       %Tramas de 256 muestras
 Lfft = 512;
-N = 7;              %Contamos con 7 elementos
-phi = pi/4;         %Ángulo de llegada del target
-L_signal = length(xc(:,1));   %Longitud total de la señal
-Ntramas = floor(L_signal/128);       %Determinamos el número de tramas
-iter = 1;                      %Iterador del bucle para las ventanas
-win = hanning(Ltrama+1,'periodic'); %Establecemos la ventana de hanning
-n = (0:1:6);         
-tn = ((d*cos(phi).*n)/Vprop);  %Creamos el vector de retardos
+N = Nc;             % Número de elementos
+phi = pi/2;         %Ángulo de llegada del target
+L_signal = length(y(:,ncent));   %Longitud total de la señal
+win = hanning(Ltrama+1,'periodic'); %Establecemos la ventana de hanning  
 freq = linspace(1, 8000, 129); %Vector de frecuencias (Fs >= Fmax)
+n=0:1:N-1;
 spherical = 0;
 
 %% Tipo de onda
@@ -60,7 +112,7 @@ if spherical == 1
         % una de las distancias de los sensores a la fuente
         d_n(i) = r_s_n(1) / r_s_n(i);
         %Retardo (distancia / velocidad)
-        tn(i) = (r_s_n(i) - r_s_n(1)) / Vprop;
+        tn(i) = (r_s_n(i) - r_s_n(1)) / c;
     end
     
     
@@ -71,34 +123,45 @@ if spherical == 1
 else
     fprintf('Aplicada onda plana \n');
     % Se computa el retardo asociado a cada sensor (para 90 siempre es 0)
-    tn=(n*d*cos(phi))/Vprop;
+    tn=(n*d*cos(phi))/c;
     d_n = ones(1,N);
 end
 
 
 %% MATRIZ DE CORRELACIÓN ESPACIAL DEL RUIDO
-muestras_ruido = 3000;
-corr_noise = noise_matrix(N, freq, win, Ltrama, muestras_ruido, xc);
+muestras_ruido = 8000;
+corr_noise = noise_matrix(N, freq, win, Ltrama, muestras_ruido, y);
 
 %% Beamformer
 
 %Creamos la matriz vacía donde vamos a guardar el resultado final
 xc_out = zeros(L_signal,N);
 
-%obtenemos los pesos por medio de nuestra función auxiliar
-%w = pesos(tn, d_n, freq);
+% Pesos MVDR
 w = pesos_MVDR(d_n, tn, freq, corr_noise);
+%w = pesos_DAS(d_n,tn, freq);
+
+
+% Garantizamos que la señal sea divisible en tramas de tamaño 256
+[m,~]=size(y);
+resto=mod(m,Ltrama);
+y=y(1:m-resto,:);
+% Se obtiene el número de muestras que tendrá la señal sobre la que se
+% aplicará el beamforming
+[m,~]=size(y); 
+
+Ntramas=2*(m/Ltrama)-1;
+
 
 XOUT = zeros(129, 1);
 iter = 1;
 
-
-%Para realizar el trabajo, usaremos un doble bucle
+% Procesamiento por tramas
 for ntram = 1:Ntramas 
 
     for c = 1:N        
         
-        xn = xc(iter:iter + Ltrama ,c); %Tomamos la porción de señal del canal correspondiente
+        xn = y(iter:iter + Ltrama ,c); %Tomamos la porción de señal del canal correspondiente
         Xn = fft(sqrt(win).*xn);        %Realizamos la transformada de Fourier de la ventana
         Xn = Xn(1:Ltrama/2+1);          %Tomamos las componentes de frecuencia de 0 a Fs/2 (Fs/2 = 8 kHz)s     
         Xn = Xn .* conj(w(:,c));        %Multiplicamos por los pesos correspondientes
@@ -107,7 +170,7 @@ for ntram = 1:Ntramas
         
         %Realizamos la simetrización para practicar la transformada inversa
         XOUT = cat(1, Xn, conj(Xn(end:-1:2)));
-        xout = real(ifft(XOUT).*sqrt(win));
+        xout = real(ifft(XOUT) .* sqrt(win));
         
         %Concatenación de tramas mediante ''overlap add''
         xc_out(iter:iter + Ltrama, c) = xc_out(iter:iter + Ltrama, c) + xout;
@@ -123,7 +186,6 @@ end
 xc_out_sum = sum(xc_out, 2);
 
 xout_norm = xc_out_sum/max(abs(xc_out_sum));
-x_antes_norm = xc(:,3)/max(abs(xc(:,3)));
 soundsc(real(xout_norm),Fs);
 
 % Guardamos señal resultante normalizada
@@ -132,29 +194,29 @@ audiowrite(fout,xout_norm,Fs)
 
 
 figure(2)
-plot(x_antes_norm);
+plot(y(:,ncent));
 hold on
 plot(real(xout_norm));
 hold off
 legend('Señal sensor central','Señal a la salida del beamformer')
-title('Representación temporal tras D&S')
+title('Representación temporal tras MVDR')
 %Se puede comprobar como el ruido se ha minimizado
 
 %% Cálculo SNR
 %Para realizar el cálculo de la SNR, calculamos la potencia de la señal
-%y del ruido (primeras 3000 muestras) y obtenemos el ratio.
+%y del ruido (primeras 8000 muestras) y obtenemos el ratio.
 
-% SNR DESPUÉS DEL BEAMFORMING D&S
-ruido_orig = var((xc(1:3000, 1))); %Interferencia aislada en las 3000 primeras muestras
-pot_orig = var((xc(3001:end, 1)));
+% SNR ANTES DEL BEAMFORMING 
+ruido_orig = var((y(1:8000, ncent))); %Interferencia aislada en las 8000 primeras muestras
+pot_orig = var((y(8000:end, ncent)));
 SNR_orig = calculo_SNR(pot_orig, ruido_orig);
-fprintf('SNR(antes)  = %f dB\n', SNR_orig);
+fprintf('SNR(before)  = %f dB\n', SNR_orig);
 
-% SNR DESPUÉS DEL BEAMFORMING DAS
-ruido_DAS = var(real(xc_out_sum(1:3000)));
-pot_DAS = var(real(xc_out_sum(3001:end)));
+% SNR DESPUÉS DEL BEAMFORMING 
+ruido_DAS = var(real(xout_norm(1:8000)));
+pot_DAS = var(real(xout_norm(8000:end)));
 SNR_DAS = calculo_SNR(pot_DAS, ruido_DAS);
-fprintf('SNR(D&S)  = %f dB\n', SNR_DAS);
+fprintf('SNR(after)  = %f dB\n', SNR_DAS);
 
 
 %% Comprobación beamformer
@@ -208,24 +270,16 @@ figure(4);
 polarplot(theta_polar, D_matrix(1,:),'Color',[color_map(1,:)]);
 hold on
 polarplot(theta_polar, D_matrix(2,:),'Color',[color_map(2,:)]);
-hold on
 polarplot(theta_polar, D_matrix(3,:),'Color',[color_map(3,:)]);
-hold on
 polarplot(theta_polar, D_matrix(4,:),'Color',[color_map(4,:)]);
-hold on
 polarplot(theta_polar, D_matrix(5,:),'Color',[color_map(5,:)]);
-hold on
 polarplot(theta_polar, D_matrix(6,:),'Color',[color_map(6,:)]);
-hold on
 polarplot(theta_polar, D_matrix(7,:),'Color',[0.6350 0.0780 0.1840]);
-hold on
 polarplot(theta_polar, D_matrix(8,:),'Color',[color_map(7,:)]);
-hold on
 polarplot(theta_polar, D_matrix(9,:),'Color',[color_map(8,:)]);
-hold on
 polarplot(theta_polar, D_matrix(10,:),'Color',[color_map(9,:)]);
-hold on
 polarplot(theta_polar, D_matrix(11,:),'Color',[color_map(10,:)]);
+hold off
 title('Directividad teórica');
 legend('f = 100Hz','f = 400Hz','f = 700Hz','f = 1kHz','f = 2kHz','f = 3kHz','f = 4.25kHz','f = 5kHz','f = 6kHz','f = 7kHz', 'f = 8kHz');
 % Se observa el aumento de la directividad conforme la frecuencia va
