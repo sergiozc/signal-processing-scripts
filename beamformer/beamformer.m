@@ -27,12 +27,10 @@ N = 7;              %Contamos con 7 elementos
 phi = pi/4;         %Ángulo de llegada del target
 L_signal = length(xc(:,1));   %Longitud total de la señal
 Ntramas = floor(L_signal/128);       %Determinamos el número de tramas
-iter = 1;                      %Iterador del bucle para las ventanas
 win = hanning(Ltrama+1,'periodic'); %Establecemos la ventana de hanning
-n = (0:1:6);         
-tn = ((d*cos(phi).*n)/Vprop);  %Creamos el vector de retardos
+n = (0:1:N-1);         
 freq = linspace(1, 8000, 129); %Vector de frecuencias (Fs >= Fmax)
-spherical = 0;
+spherical = 1;
 
 %% Tipo de onda
 %Cáculo de la contribución de onda esférica si procede
@@ -86,8 +84,8 @@ corr_noise = noise_matrix(N, freq, win, Ltrama, muestras_ruido, xc);
 xc_out = zeros(L_signal,N);
 
 %obtenemos los pesos por medio de nuestra función auxiliar
-%w = pesos(tn, d_n, freq);
-w = pesos_MVDR(d_n, tn, freq, corr_noise);
+w = pesos_DAS(d_n, tn, freq);
+%w = pesos_MVDR(d_n, tn, freq, corr_noise);
 
 XOUT = zeros(129, 1);
 iter = 1;
@@ -144,17 +142,17 @@ title('Representación temporal tras D&S')
 %Para realizar el cálculo de la SNR, calculamos la potencia de la señal
 %y del ruido (primeras 3000 muestras) y obtenemos el ratio.
 
-% SNR DESPUÉS DEL BEAMFORMING D&S
+% SNR DESPUÉS DEL BEAMFORMING 
 ruido_orig = var((xc(1:3000, 1))); %Interferencia aislada en las 3000 primeras muestras
 pot_orig = var((xc(3001:end, 1)));
 SNR_orig = calculo_SNR(pot_orig, ruido_orig);
 fprintf('SNR(antes)  = %f dB\n', SNR_orig);
 
-% SNR DESPUÉS DEL BEAMFORMING DAS
-ruido_DAS = var(real(xc_out_sum(1:3000)));
-pot_DAS = var(real(xc_out_sum(3001:end)));
-SNR_DAS = calculo_SNR(pot_DAS, ruido_DAS);
-fprintf('SNR(D&S)  = %f dB\n', SNR_DAS);
+% SNR DESPUÉS DEL BEAMFORMING
+ruido_BF = var(real(xc_out_sum(1:3000)));
+pot_BF = var(real(xc_out_sum(3001:end)));
+SNR_BF = calculo_SNR(pot_BF, ruido_BF);
+fprintf('SNR(BF)  = %f dB\n', SNR_BF);
 
 
 %% Comprobación beamformer
