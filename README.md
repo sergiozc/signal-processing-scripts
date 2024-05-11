@@ -6,6 +6,9 @@ The macros have been built using Matlab and Python.
 Pitch frequency measurement, periodogram of each vowel, voice spectrum analysis and cepstrum FFT.
 This macro can be found at "voice-processing/" directory.
 
+# Kalman filter
+Tracking of a geostationary orbit using extended Kalman filtering. A filter is implemented that performs the prediction from a dynamic model and provided measurements.
+
 # Equalizer
 The equalization of a QAM-16 signal transmitted through a multipath channel can be found at "equalizer/" directory.
 The simulation has been carried out for a static channel (TSE-LS) and for a changing channel (TSE decision-directed).
